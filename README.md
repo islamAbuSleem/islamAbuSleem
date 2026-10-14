@@ -1,16 +1,24 @@
-## Hi there 👋
+# Islam Abusleem — Senior Full-Stack Engineer
 
-<!--
-**islamAbuSleem/islamAbuSleem** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+8+ years building scalable web apps, frontend platforms, backend services and APIs across fintech, government, healthcare, transportation, e-commerce and media. Based Saudi Arabia (GMT+3) — Open to Remote Global.
 
-Here are some ideas to get you started:
+Currently @ SAMI Advanced Electronics (MOD initiatives, Mawqfi parking, ops tools).
 
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+## Stack
+Frontend: Vue.js, React, TypeScript, JavaScript, HTML/CSS, Tailwind, Next.js
+Backend: Node.js, Express, NestJS, Java Spring Boot, REST APIs
+Data: PostgreSQL, MySQL, MongoDB, Mongoose, Sequelize
+Tools: Git, GitHub, Postman, Swagger, Figma
+
+## Featured
+- [Booking](https://github.com/islamAbuSleem/Booking) — fullstack booking platform (223+ commits, active)
+- [job-pilot](https://github.com/islamAbuSleem/job-pilot) — Next.js + TypeScript job app
+- [portfolio-FE](https://github.com/islamAbuSleem/portfolio-FE) + [portfolio-BE](https://github.com/islamAbuSleem/portfolio-BE) — Next.js + NestJS portfolio platform
+- [Ecommerce](https://github.com/islamAbuSleem/Ecommerce) — TypeScript e-commerce app
+
+## Background highlights
+- Foodics Pay merchant payment workflows
+- Saudi Ministry of Justice platforms @ 2P
+- Healthcare + NBE payments @ Kion-eg, railway reservation @ TransIT
+
+📫 islam.abusleem@gmail.com | [LinkedIn](https://www.linkedin.com/in/islamabusleem/)

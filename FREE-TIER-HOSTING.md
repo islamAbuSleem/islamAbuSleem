@@ -1,7 +1,7 @@
 # Free-Tier Hosting Guide
 
 Everything needed to run the portfolio and its apps on free hosting, using
-**Cloudflare Workers**, **Render Free** and **Neon** ”” with **$0 recurring cost**.
+**Cloudflare Workers**, **Render Free** and **Neon** — with **$0 recurring cost**.
 
 > Full architecture, per-app setup, checklists, troubleshooting and migration
 > notes live in this file. Each repository also has a short `DEPLOYMENT.md`
@@ -12,26 +12,26 @@ Everything needed to run the portfolio and its apps on free hosting, using
 ## 1. Architecture
 
 ```
-                        â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-   Browser â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¶â”‚  Cloudflare Workers  (portfolio-FE)      â”‚
-   (portfolio-fe.       â”‚  Next.js 16 via vinext                   â”‚
-    workers.dev)        â”‚  ”¢ SSR  ”¢ /api/* reverse proxy          â”‚
-                        â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                                        â”‚  same-origin proxy
-                                        â”‚  (keeps the auth cookie
-                                        â”‚   first-party)
+                        â"Œâ"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"
+   Browser â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â–¶â"‚  Cloudflare Workers  (portfolio-FE)      â"‚
+   (portfolio-fe.       â"‚  Next.js 16 via vinext                   â"‚
+    workers.dev)        â"‚  "¢ SSR  "¢ /api/* reverse proxy          â"‚
+                        â—â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"¬â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"˜
+                                        â"‚  same-origin proxy
+                                        â"‚  (keeps the auth cookie
+                                        â"‚   first-party)
                                         â–¼
-                        â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-                        â”‚  Render Free  (portfolio-BE)             â”‚
-                        â”‚  NestJS 11 on 0.0.0.0:$PORT             â”‚
-                        â”‚  /health  ”¢  /health/ready               â”‚
-                        â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                                        â”‚  pooled connection
+                        â"Œâ"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"
+                        â"‚  Render Free  (portfolio-BE)             â"‚
+                        â"‚  NestJS 11 on 0.0.0.0:$PORT             â"‚
+                        â"‚  /health  "¢  /health/ready               â"‚
+                        â—â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"¬â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"˜
+                                        â"‚  pooled connection
                                         â–¼
-                        â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-                        â”‚  Neon Free  (PostgreSQL)                 â”‚
-                        â”‚  Prisma 7 + @prisma/adapter-pg          â”‚
-                        â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                        â"Œâ"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"
+                        â"‚  Neon Free  (PostgreSQL)                 â"‚
+                        â"‚  Prisma 7 + @prisma/adapter-pg          â"‚
+                        â—â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"˜
 ```
 
 ### Why the API is proxied through the Worker
@@ -39,7 +39,7 @@ Everything needed to run the portfolio and its apps on free hosting, using
 The admin panel authenticates with an httpOnly JWT cookie that is
 `SameSite=Lax`. The Worker (`*.workers.dev`) and the API (`*.onrender.com`)
 are **different registrable domains**, so a direct browser call to the API
-would be cross-site and the browser would drop the cookie ”” the admin panel
+would be cross-site and the browser would drop the cookie — the admin panel
 would fail to log in with no visible error.
 
 `next.config.ts` therefore rewrites `/api/*` to the API origin. The browser
@@ -68,34 +68,27 @@ Plus two static-ish Nuxt apps:
 
 ### Live URLs
 
-The canonical origin of the portfolio is **`https://islamabusleem.eu.org`** ””
-a free permanent subdomain from EU.org (free since 1996). The generated
-`workers.dev` hostname stays live as a fallback.
+The canonical origin of the portfolio is Cloudflare's free `workers.dev`
+hostname: **`https://portfolio-fe.islamabusleem.workers.dev`**. It is free,
+permanent, and never expires or needs renewing.
 
 | Service | URL | Status |
 |---|---|---|
-| **Portfolio (main link)** | `https://islamabusleem.eu.org` | **Canonical** ”” awaiting EU.org approval (§3.4) |
-| Portfolio (fallback hostname) | `https://portfolio-fe.islamabusleem.workers.dev` | **Live** |
+| **Portfolio (main link)** | `https://portfolio-fe.islamabusleem.workers.dev` | **Live** |
 | Portfolio API (Render Free) | `https://portfolio-usca.onrender.com` | **Live** |
 | API health | `https://portfolio-usca.onrender.com/health` | **Live** |
 | API readiness (DB check) | `https://portfolio-usca.onrender.com/health/ready` | **Live** |
 | workers.dev subdomain | `islamabusleem` | Registered |
 | Neon project | `Portfolio` (`old-butterfly-47446749`), region `aws-us-east-2` (Ohio), PG 18 | **Live** |
 
-Both custom domains are **already attached** to the `portfolio-fe` Worker, so
-the site starts serving the moment DNS delegates:
-
-| Hostname | Cloudflare zone | Nameservers to give the registrar |
-|---|---|---|
-| `islamabusleem.eu.org` (free) | `79ebdc711b2b1b44a02e07561afa137a` | `bill.ns.cloudflare.com`, `summer.ns.cloudflare.com` |
-| `islamabusleem.dev` (paid, $12-15/yr) | `17c3c1ba2c719d48e5a0f96e121bcc7b` | `anita.ns.cloudflare.com`, `lennox.ns.cloudflare.com` |
+The Cloudflare account holds exactly one Worker (`portfolio-fe`) with no
+custom domains and no extra zones — the whole portfolio is one Worker on the
+free hostname.
 
 `lib/site.ts` holds `SITE_URL` (the canonical origin) and is used for
 `metadataBase`, `alternates.canonical` and the Open Graph URL, so search
-engines and link previews point at the custom domain. The portfolio's own
-project card links to `SITE_URL` too. Switching between the free and the
-paid domain is a one-line change in `lib/site.ts` plus the `FRONTEND_URL`
-allow-list on Render.
+engines and link previews point at the right address. The portfolio's own
+project card links to `SITE_URL` too.
 
 > **Build command gotcha:** Render sets `NODE_ENV=production`, which makes
 > `npm ci` skip devDependencies. The Nest CLI and TypeScript are
@@ -113,7 +106,7 @@ allow-list on Render.
 
 ## 2. Environment variables
 
-### Cloudflare Workers ”” portfolio-FE
+### Cloudflare Workers — portfolio-FE
 
 | Variable | Type | Required | Value |
 |---|---|---|---|
@@ -124,7 +117,7 @@ destination. It must be a **build variable** in Workers Builds, not a runtime
 secret. If it is missing, the build emits no rewrite and `/api/*` is not
 proxied (the app still boots, but the admin panel cannot authenticate).
 
-`NEXT_PUBLIC_API_URL` is intentionally **not** set in production ”” see above.
+`NEXT_PUBLIC_API_URL` is intentionally **not** set in production — see above.
 
 The deployed Worker also needs the `API_URL` value when you deploy from the
 CLI:
@@ -136,7 +129,7 @@ API_URL=https://portfolio-usca.onrender.com \
 npx cf deploy
 ```
 
-### Render Free ”” portfolio-BE
+### Render Free — portfolio-BE
 
 | Variable | Required | Notes |
 |---|---|---|
@@ -146,7 +139,7 @@ npx cf deploy
 | `APP_URL` | Recommended | Single origin used to build magic-link emails |
 | `NODE_ENV` | Yes | `production` (Render sets it for you) |
 | `PORT` | Auto | Render injects it; the app listens on `0.0.0.0:$PORT` |
-| `TRUST_PROXY` | Recommended | `1` ”” Render is behind one reverse proxy |
+| `TRUST_PROXY` | Recommended | `1` — Render is behind one reverse proxy |
 | `COOKIE_DOMAIN` | No | Leave empty so the cookie stays host-only |
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `FROM_EMAIL` | Only for magic links | |
 | `SEED_ADMIN_PASSWORD` | Only for seeding | Read by `prisma/seed.ts` |
@@ -154,7 +147,7 @@ npx cf deploy
 
 ### Neon
 
-Neon has no environment variables of its own ”” it issues connection strings.
+Neon has no environment variables of its own — it issues connection strings.
 You need **two**:
 
 - **Pooled** (`ep-xxx-pooler.<region>.aws.neon.tech`) â†’ runtime traffic.
@@ -170,13 +163,13 @@ Both end with `?sslmode=require`.
   `.env` / `.env.local` files, which are git-ignored.
 - `.env.example` files are committed and contain placeholders only.
 - Never put `DATABASE_URL`, `JWT_SECRET` or SMTP credentials in a
-  `NEXT_PUBLIC_*` variable ”” those are inlined into the browser bundle.
+  `NEXT_PUBLIC_*` variable — those are inlined into the browser bundle.
 
 ---
 
 ## 3. Manual dashboard setup
 
-### 3.1 Neon (do this first ”” the API needs the database to boot)
+### 3.1 Neon (do this first — the API needs the database to boot)
 
 1. Sign in at <https://neon.tech> and create a project named `portfolio`.
 2. Pick the **Free** plan. Choose the region closest to your Render region
@@ -207,7 +200,7 @@ Both end with `?sslmode=require`.
 
 > `render.yaml` in the repo is a ready-made Blueprint. Render's
 > **New â†’ Blueprint** flow reads it and pre-fills everything; you only have to
-> supply the `sync: false` values. Using the Blueprint is optional ”” the
+> supply the `sync: false` values. Using the Blueprint is optional — the
 > manual route above works identically.
 
 `npm ci` installs dependencies, then the `prebuild` script runs
@@ -218,7 +211,7 @@ Both end with `?sslmode=require`.
 Two ways to deploy. The CLI route is what was used for the first deploy; the
 Workers Builds route is what you want for automatic deployments afterwards.
 
-#### Option A ”” CLI (used for the first deploy)
+#### Option A — CLI (used for the first deploy)
 
 1. Create an API token: **Cloudflare â†’ My Profile â†’ API Tokens â†’ Create Token â†’
    Custom token**
@@ -241,91 +234,57 @@ Workers Builds route is what you want for automatic deployments afterwards.
    API_URL=https://portfolio-usca.onrender.com \
    npx cf deploy
    ```
-   `API_URL` **must** be set here ”” the rewrite destination is baked in at
+   `API_URL` **must** be set here — the rewrite destination is baked in at
    build time. The build log confirms it:
    ```
    [vinext] Found 1 external rewrite that proxy requests to external origins:
      /api/:path* â†’ https://portfolio-usca.onrender.com/:path*
    ```
 
-#### Option B ”” Workers Builds (GitHub auto-deploy)
+#### Option B — Workers Builds (GitHub auto-deploy)
 
 1. **Workers & Pages â†’ Create â†’ Import a project**, connect `portfolio-FE`.
 2. Build settings:
    - **Framework preset:** None
    - **Build command:** `npm run build:vinext`
-   - **Build output directory:** *(leave empty ”” vinext writes to
+   - **Build output directory:** *(leave empty — vinext writes to
      `.cloudflare/output`)*
    - **Root directory:** *(leave empty)*
    - **Node version:** `22`
 3. **Settings â†’ Variables and Secrets â†’ Add**:
-   - `API_URL` â†’ **Type: Text** and **under "Build variables"** ”” this is the
+   - `API_URL` â†’ **Type: Text** and **under "Build variables"** — this is the
      important part. The rewrite destination is baked in at build time.
    - `NODE_ENV` â†’ `production` (Text)
 4. **Save and deploy.**
 
 The portfolio lives at `https://portfolio-fe.islamabusleem.workers.dev`.
 
-### 3.4 Custom domain ”” `islamabusleem.eu.org` (free)
+### 3.4 Moving to a custom domain later (optional)
 
-The free route. EU.org has handed out free subdomains since 1996; they are
-permanent, support custom nameservers, and work with Cloudflare Workers
-custom domains.
+The portfolio currently lives on Cloudflare's free `workers.dev` hostname,
+which costs nothing and never expires. If you later want a shorter address,
+it is a small change:
 
-**Already done:**
-- The Cloudflare zone `islamabusleem.eu.org` exists in the account
-  (zone id `79ebdc711b2b1b44a02e07561afa137a`, Free plan).
-- The custom domain is attached to the `portfolio-fe` Worker, so the
-  certificate is provisioned and the site is ready to serve.
+1. **Buy the domain.** `islamabusleem.dev` at Cloudflare Registrar is sold
+   at cost (~$12-15/yr, no markup) and is the simplest: Cloudflare sets the
+   nameservers for you. `islamabusleem.xyz` is usually ~$1 for the first
+   year at Porkbun or Spaceship. `islamabusleem.eu.org` is free but EU.org
+   reviews every request by hand (days to weeks).
+2. **Add it to Cloudflare** - Domains -> Onboard a domain -> Free plan.
+3. **Attach it to the Worker** - Workers & Pages -> portfolio-fe -> Settings
+   -> Domains & Routes -> Add -> Custom Domain.
+4. **Point the app at it** - change `SITE_URL` in
+   `islam/client/lib/site.ts`, update `APP_URL` and `FRONTEND_URL` on
+   Render, then redeploy the Worker.
 
-**One step left, and it is manual because EU.org reviews every request by
-hand:**
+Nothing else changes: the same Worker, the same build, the same API proxy.
 
-1. Create an account at <https://nic.eu.org/> and verify your email.
-2. Request the domain `islamabusleem.eu.org`.
-3. **When it asks for nameservers, enter exactly these** (they are the ones
-   Cloudflare assigned to the zone above):
-   ```
-   bill.ns.cloudflare.com
-   summer.ns.cloudflare.com
-   ```
-   Getting these right is what makes the zone activate on approval.
-4. Wait for approval. EU.org reviews manually: typically a few days, sometimes
-   a few weeks, and occasionally a request is rejected (they ask for real
-   contact details and disallow purely commercial use of the subdomain).
-5. Once approved, the zone flips to `active` and
-   `https://islamabusleem.eu.org` serves the portfolio immediately. No
-   redeploy is needed.
+### 3.5 Learn Hub and Software Engineer Docs (prepared, not deployed)
 
-Then add the domain to the API's CORS allow-list on Render ”” it is already
-there, but if you change it:
-
-```
-FRONTEND_URL=https://portfolio-fe.islamabusleem.workers.dev,https://islamabusleem.eu.org,https://islamabusleem.dev
-```
-
-### 3.5 Custom domain ”” `islamabusleem.dev` (paid, optional)
-
-The nicer-looking option. The Cloudflare zone already exists
-(`17c3c1ba2c719d48e5a0f96e121bcc7b`) and the custom domain is attached to
-the Worker, so it only needs a purchase:
-
-1. **Cloudflare â†’ Registrar â†’ Register Domain** ”” `.dev` is sold at cost
-   (~$12”“15/yr, no markup). Because the zone is already in the account,
-   Cloudflare sets the nameservers automatically and the zone activates.
-2. If you use another registrar instead, point it at
-   `anita.ns.cloudflare.com` / `lennox.ns.cloudflare.com`.
-
-To switch the site over to it, change `SITE_URL` in `islam/client/lib/site.ts`
-to `https://islamabusleem.dev`, redeploy the Worker, and update
-`APP_URL` on Render.
-
-### 3.6 Learn Hub and Software Engineer Docs (prepared, not deployed)
-
-These two Nuxt apps are **ready to publish but deliberately not deployed** ””
+These two Nuxt apps are **ready to publish but deliberately not deployed** —
 only the portfolio and its API are live. When you decide to publish them:
 
-- **Learn Hub** (`learn`) ”” Nitro `cloudflare_module` preset:
+- **Learn Hub** (`learn`) — Nitro `cloudflare_module` preset:
   ```bash
   cd learn
   CLOUDFLARE_API_TOKEN=<token> CLOUDFLARE_ACCOUNT_ID=<account-id> \
@@ -333,7 +292,7 @@ only the portfolio and its API are live. When you decide to publish them:
   ```
   â†’ `https://learn-hub.islamabusleem.workers.dev`
 
-- **Software Engineer Docs** (`software-engineer-docs`) ”” prerendered static
+- **Software Engineer Docs** (`software-engineer-docs`) — prerendered static
   assets (its `@nuxt/content` runtime needs the native `better-sqlite3`
   module, which Workers cannot load):
   ```bash
@@ -355,7 +314,7 @@ only the portfolio and its API are live. When you decide to publish them:
 | App | Mechanism | Trigger | Status |
 |---|---|---|---|
 | portfolio-BE (API) | **Render auto-deploy** (GitHub integration) | push to `main` | **Active** |
-| portfolio-FE (Worker) | **Cloudflare Workers Builds** (GitHub integration) | push to `main` | Not yet connected ”” deploys from the CLI for now |
+| portfolio-FE (Worker) | **Cloudflare Workers Builds** (GitHub integration) | push to `main` | Not yet connected — deploys from the CLI for now |
 | Learn Hub | Cloudflare Workers Builds | push to `main` | Not deployed |
 | Engineer Docs | Cloudflare Workers Builds | push to `main` | Not deployed |
 
@@ -371,9 +330,9 @@ from `main`.
 
 `.github/workflows/ci.yml` was added to `portfolio-FE` and `portfolio-BE`:
 
-- **portfolio-FE** ”” lint â†’ `tsc --noEmit` â†’ `next build` â†’
+- **portfolio-FE** — lint â†’ `tsc --noEmit` â†’ `next build` â†’
   `vinext check` â†’ `vite build` (the Cloudflare build).
-- **portfolio-BE** ”” lint â†’ `build` â†’ unit tests â†’ e2e tests, against a
+- **portfolio-BE** — lint â†’ `build` â†’ unit tests â†’ e2e tests, against a
   throwaway PostgreSQL 16 service container.
 
 These run on every push and pull request to `main`.
@@ -386,7 +345,7 @@ spin down (see the cold-start note in §1).
 
 `main` is the production branch. The current working branches
 (`feature/button-loaders`, `fix/experience-date-normalization`) are feature
-branches ”” merge them into `main` before you want them live.
+branches — merge them into `main` before you want them live.
 
 ---
 
@@ -436,7 +395,7 @@ Useful commands:
 
 ## 6. Deployment checklist
 
-### First deployment ”” DONE
+### First deployment — DONE
 
 - [x] Create the Neon project; copy the **pooled** and **direct** URLs.
 - [x] Apply migrations locally against Neon: `DIRECT_DATABASE_URL=... npm run db:deploy`
@@ -452,7 +411,7 @@ Useful commands:
 - [x] Verify `https://portfolio-fe.islamabusleem.workers.dev/api/projects` proxies
 - [x] Fill the live URL into `data/projects.ts` â†’ `PROJECT_LIVE_URLS`
 - [x] Push the `main` branches so CI runs
-- [ ] Open `/admin/login` and sign in ”” **the real end-to-end test** of the
+- [ ] Open `/admin/login` and sign in — **the real end-to-end test** of the
       cookie proxy. If the cookie is not forwarded, the API's `FRONTEND_URL`
       is wrong or `API_URL` was set as a runtime secret instead of a build
       variable.
@@ -485,7 +444,7 @@ The cookie is not surviving the trip to the browser.
 1. Check the API's `FRONTEND_URL` contains the **exact** Worker origin
    (scheme + host, no trailing slash).
 2. Check `API_URL` on Cloudflare is a **build variable**, not only a runtime
-   secret. The rewrite destination is baked in at build time ”” rebuild after
+   secret. The rewrite destination is baked in at build time — rebuild after
    changing it.
 3. Confirm in the browser devtools â†’ Network â†’ the `/api/auth/login`
    response has a `Set-Cookie` header. If it is missing, the request never
@@ -493,7 +452,7 @@ The cookie is not surviving the trip to the browser.
 4. Confirm the request to `/api/auth/login` was made **same-origin**
    (the Request URL should start with your Worker origin, not
    `onrender.com`). If it points at `onrender.com`, `NEXT_PUBLIC_API_URL`
-   is set ”” remove it.
+   is set — remove it.
 
 ### `npm run build:vinext` succeeds but `/api/*` returns 404
 
@@ -514,7 +473,7 @@ If that line is missing, `API_URL` was not picked up.
 ### Render deploy fails with `sh: 1: nest: not found`
 
 `NODE_ENV=production` is set on Render, so `npm ci` **skips
-devDependencies** ”” and the Nest CLI (`@nestjs/cli`) and TypeScript are
+devDependencies** — and the Nest CLI (`@nestjs/cli`) and TypeScript are
 devDependencies. Use `npm ci --include=dev && npm run build`.
 
 ### Render deploy fails with "Cannot find module ... .prisma/client"
@@ -527,7 +486,7 @@ just `nest build`, restore `npm ci && npm run build`.
 
 `src/config/env.validation.ts` fails the boot in production when
 `DATABASE_URL`, `JWT_SECRET` or `FRONTEND_URL` is missing. This is
-intentional ”” a half-configured service fails loudly instead of serving
+intentional — a half-configured service fails loudly instead of serving
 broken responses. Add the variable and redeploy.
 
 ### The API returns 500 on every database route, but `/health` is fine
@@ -576,7 +535,7 @@ without upgrading Next.js to `>=16.4.1`. If vinext becomes a blocker:
 4. Re-run `npm run check:vinext` to confirm the upgrade did not break
    anything else.
 
-Keep the original `next dev` / `next build` scripts ”” they are the
+Keep the original `next dev` / `next build` scripts — they are the
 fastest local feedback loop and are independent of the deploy adapter.
 
 ---
@@ -592,7 +551,7 @@ fastest local feedback loop and are independent of the deploy adapter.
 | Worker size | 3 MB (compressed) | The portfolio bundle is well under this |
 | Static assets | 20,000 files | Not a constraint |
 | Subdomains | `*.workers.dev` | Free URL, no custom domain needed |
-| Deployments | Unlimited | ”” |
+| Deployments | Unlimited | — |
 
 ### Render Free
 
@@ -601,7 +560,7 @@ fastest local feedback loop and are independent of the deploy adapter.
 | Sleep | After 15 min idle | ~50 s wake on the next request |
 | Monthly hours | 750 (â‰ˆ 31 days of 1 instance) | Effectively unlimited for one instance |
 | Instance | 0.1 CPU, 512 MB RAM | Comfortable for a small NestJS API |
-| Static sites | Free, unlimited | Could host the portfolio instead ”” but SSR is needed here |
+| Static sites | Free, unlimited | Could host the portfolio instead — but SSR is needed here |
 | Cold start | ~50 s | Use a ping to keep it warm (below) |
 
 ### Neon Free
@@ -653,7 +612,7 @@ public runners, so this may not fully defeat the sleep.
 There are two ways. Use the admin panel for content you want to edit later
 without a deploy; use the static catalogue for code-controlled content.
 
-### Option A ”” the admin panel (no deploy needed)
+### Option A — the admin panel (no deploy needed)
 
 1. Sign in at `https://portfolio-fe.islamabusleem.workers.dev/admin/projects`.
 2. Fill in title, description, tech stack (comma-separated), screenshot URL,
@@ -662,7 +621,7 @@ without a deploy; use the static catalogue for code-controlled content.
 4. Save. The change is live immediately (the pages are SSR and the API is
    read on every request).
 
-### Option B ”” the static catalogue (version controlled)
+### Option B — the static catalogue (version controlled)
 
 Edit `islam/client/data/projects.ts`:
 
@@ -711,7 +670,7 @@ after the database ones.
 | Any Node server | Render | Same as NestJS; add a `Procfile` with `web: npm start` |
 | Spring Boot | Render | Build `./mvnw package -DskipTests`, start `java -jar target/*.jar` |
 
-For a Spring Boot or other JVM app, set `PORT` and bind to `0.0.0.0` ”” the
+For a Spring Boot or other JVM app, set `PORT` and bind to `0.0.0.0` — the
 same rule as the NestJS service.
 
 ---
@@ -721,18 +680,18 @@ same rule as the NestJS service.
 The setup was chosen so that moving off the free tiers is a re-point, not a
 rewrite.
 
-- **Frontend** ”” `npm run build` produces a standard Next.js build; on a VPS
+- **Frontend** — `npm run build` produces a standard Next.js build; on a VPS
   run `next start` behind a reverse proxy, or keep the Worker.
-- **Backend** ”” `npm run start:prod` runs `node dist/main` on any Node
+- **Backend** — `npm run start:prod` runs `node dist/main` on any Node
   host. It already binds `0.0.0.0:$PORT` and reads `PORT` from the
   environment, which is exactly what Coolify, Docker and Kubernetes
   expect. `Procfile` is committed for Heroku-style platforms.
-- **Database** ”” `DATABASE_URL` is a standard PostgreSQL URL. Point it at
+- **Database** — `DATABASE_URL` is a standard PostgreSQL URL. Point it at
   Coolify's managed Postgres (or a self-hosted container) and nothing else
   changes. The Prisma schema and migrations are portable as-is.
-- **CORS** ”” `FRONTEND_URL` is a variable, so adding the new domain is a
+- **CORS** — `FRONTEND_URL` is a variable, so adding the new domain is a
   one-line change.
-- **Workers-specific code** ”” only `vite.config.ts` and
+- **Workers-specific code** — only `vite.config.ts` and
   `cloudflare.config.ts` are Cloudflare-bound. Both can be deleted without
   touching the application.
 

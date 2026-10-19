@@ -150,9 +150,9 @@ npx cf deploy
 Neon has no environment variables of its own — it issues connection strings.
 You need **two**:
 
-- **Pooled** (`ep-xxx-pooler.<region>.aws.neon.tech`) â†’ runtime traffic.
+- **Pooled** (`ep-xxx-pooler.<region>.aws.neon.tech`) → runtime traffic.
   Goes into `DATABASE_URL`.
-- **Direct** (`ep-xxx.<region>.aws.neon.tech`) â†’ migrations. Prisma Migrate
+- **Direct** (`ep-xxx.<region>.aws.neon.tech`) → migrations. Prisma Migrate
   cannot run over a transaction-mode pooler.
 
 Both end with `?sslmode=require`.
@@ -176,15 +176,15 @@ Both end with `?sslmode=require`.
    (Oregon / `aws-us-east-1` pairs with Render's `oregon`).
 3. Neon creates a `neondb` database with a `neondb_owner` role.
 4. Open **Connection details** and copy **both** strings:
-   - *Pooled connection* â†’ `DATABASE_URL`
-   - *Direct connection* â†’ `DIRECT_DATABASE_URL`
+   - *Pooled connection* → `DATABASE_URL`
+   - *Direct connection* → `DIRECT_DATABASE_URL`
 5. **Do not delete the project.** Free projects are kept for a while, but the
    compute scales to zero after ~5 minutes of inactivity.
 
 ### 3.2 Render (the API)
 
 1. Sign in at <https://render.com> and connect the `portfolio-BE` repository.
-2. **New â†’ Web Service**, then:
+2. **New → Web Service**, then:
    - **Name:** `portfolio-be`
    - **Region:** Oregon
    - **Branch:** `main`
@@ -199,7 +199,7 @@ Both end with `?sslmode=require`.
 5. **Create Web Service**.
 
 > `render.yaml` in the repo is a ready-made Blueprint. Render's
-> **New â†’ Blueprint** flow reads it and pre-fills everything; you only have to
+> **New → Blueprint** flow reads it and pre-fills everything; you only have to
 > supply the `sync: false` values. Using the Blueprint is optional — the
 > manual route above works identically.
 
@@ -213,10 +213,10 @@ Workers Builds route is what you want for automatic deployments afterwards.
 
 #### Option A — CLI (used for the first deploy)
 
-1. Create an API token: **Cloudflare â†’ My Profile â†’ API Tokens â†’ Create Token â†’
+1. Create an API token: **Cloudflare → My Profile → API Tokens → Create Token →
    Custom token**
-   - **Account â†’ Workers Scripts â†’ Edit**
-   - **Account â†’ Account Settings â†’ Read**
+   - **Account → Workers Scripts → Edit**
+   - **Account → Account Settings → Read**
    - Account Resources: include your account
 2. Register the `workers.dev` subdomain (once per account). Either open the
    Workers & Pages page in the dashboard, or call the API:
@@ -238,12 +238,12 @@ Workers Builds route is what you want for automatic deployments afterwards.
    build time. The build log confirms it:
    ```
    [vinext] Found 1 external rewrite that proxy requests to external origins:
-     /api/:path* â†’ https://portfolio-usca.onrender.com/:path*
+     /api/:path* → https://portfolio-usca.onrender.com/:path*
    ```
 
 #### Option B — Workers Builds (GitHub auto-deploy)
 
-1. **Workers & Pages â†’ Create â†’ Import a project**, connect `portfolio-FE`.
+1. **Workers & Pages → Create → Import a project**, connect `portfolio-FE`.
 2. Build settings:
    - **Framework preset:** None
    - **Build command:** `npm run build:vinext`
@@ -251,10 +251,10 @@ Workers Builds route is what you want for automatic deployments afterwards.
      `.cloudflare/output`)*
    - **Root directory:** *(leave empty)*
    - **Node version:** `22`
-3. **Settings â†’ Variables and Secrets â†’ Add**:
-   - `API_URL` â†’ **Type: Text** and **under "Build variables"** — this is the
+3. **Settings → Variables and Secrets → Add**:
+   - `API_URL` → **Type: Text** and **under "Build variables"** — this is the
      important part. The rewrite destination is baked in at build time.
-   - `NODE_ENV` â†’ `production` (Text)
+   - `NODE_ENV` → `production` (Text)
 4. **Save and deploy.**
 
 The portfolio lives at `https://portfolio-fe.islamabusleem.workers.dev`.
@@ -290,7 +290,7 @@ only the portfolio and its API are live. When you decide to publish them:
   CLOUDFLARE_API_TOKEN=<token> CLOUDFLARE_ACCOUNT_ID=<account-id> \
     npm run deploy:cloudflare
   ```
-  â†’ `https://learn-hub.islamabusleem.workers.dev`
+  → `https://learn-hub.islamabusleem.workers.dev`
 
 - **Software Engineer Docs** (`software-engineer-docs`) — prerendered static
   assets (its `@nuxt/content` runtime needs the native `better-sqlite3`
@@ -300,7 +300,7 @@ only the portfolio and its API are live. When you decide to publish them:
   CLOUDFLARE_API_TOKEN=<token> CLOUDFLARE_ACCOUNT_ID=<account-id> \
     npm run deploy:cloudflare
   ```
-  â†’ `https://engineer-docs.islamabusleem.workers.dev`
+  → `https://engineer-docs.islamabusleem.workers.dev`
 
   Note: `software-engineer-docs` is not a Git repository yet, so it cannot
   be wired to Workers Builds until it is initialised and pushed.
@@ -319,7 +319,7 @@ only the portfolio and its API are live. When you decide to publish them:
 | Engineer Docs | Cloudflare Workers Builds | push to `main` | Not deployed |
 
 To connect the portfolio Worker to GitHub (in the Cloudflare dashboard):
-**Workers & Pages â†’ portfolio-fe â†’ Settings â†’ Builds â†’ Connect repository**,
+**Workers & Pages → portfolio-fe → Settings → Builds → Connect repository**,
 then set the build command to `npm run build:vinext` and add `API_URL` as a
 **build variable**.
 
@@ -330,9 +330,9 @@ from `main`.
 
 `.github/workflows/ci.yml` was added to `portfolio-FE` and `portfolio-BE`:
 
-- **portfolio-FE** — lint â†’ `tsc --noEmit` â†’ `next build` â†’
-  `vinext check` â†’ `vite build` (the Cloudflare build).
-- **portfolio-BE** — lint â†’ `build` â†’ unit tests â†’ e2e tests, against a
+- **portfolio-FE** — lint → `tsc --noEmit` → `next build` →
+  `vinext check` → `vite build` (the Cloudflare build).
+- **portfolio-BE** — lint → `build` → unit tests → e2e tests, against a
   throwaway PostgreSQL 16 service container.
 
 These run on every push and pull request to `main`.
@@ -403,13 +403,13 @@ Useful commands:
 - [x] Create the Render Web Service from `portfolio-BE`; fill in the env vars
       (build command `npm ci --include=dev && npm run build`, start command
       `npm run start:prod`, health check path `/health`)
-- [x] Verify: `curl https://portfolio-usca.onrender.com/health` â†’ `{"status":"ok",...}`
-- [x] Verify: `curl https://portfolio-usca.onrender.com/health/ready` â†’ `"database":"reachable"`
+- [x] Verify: `curl https://portfolio-usca.onrender.com/health` → `{"status":"ok",...}`
+- [x] Verify: `curl https://portfolio-usca.onrender.com/health/ready` → `"database":"reachable"`
 - [x] Create the Cloudflare Worker from `portfolio-FE`
 - [x] Deploy with `API_URL=https://portfolio-usca.onrender.com` set at build time
 - [x] Verify `https://portfolio-fe.islamabusleem.workers.dev` renders (SSR)
 - [x] Verify `https://portfolio-fe.islamabusleem.workers.dev/api/projects` proxies
-- [x] Fill the live URL into `data/projects.ts` â†’ `PROJECT_LIVE_URLS`
+- [x] Fill the live URL into `data/projects.ts` → `PROJECT_LIVE_URLS`
 - [x] Push the `main` branches so CI runs
 - [ ] Open `/admin/login` and sign in — **the real end-to-end test** of the
       cookie proxy. If the cookie is not forwarded, the API's `FRONTEND_URL`
@@ -446,7 +446,7 @@ The cookie is not surviving the trip to the browser.
 2. Check `API_URL` on Cloudflare is a **build variable**, not only a runtime
    secret. The rewrite destination is baked in at build time — rebuild after
    changing it.
-3. Confirm in the browser devtools â†’ Network â†’ the `/api/auth/login`
+3. Confirm in the browser devtools → Network → the `/api/auth/login`
    response has a `Set-Cookie` header. If it is missing, the request never
    reached the API.
 4. Confirm the request to `/api/auth/login` was made **same-origin**
@@ -465,7 +465,7 @@ The build log tells you what happened:
 
 ```
 [vinext] Found 1 external rewrite that proxy requests to external origins:
-  /api/:path* â†’ https://portfolio-usca.onrender.com/:path*
+  /api/:path* → https://portfolio-usca.onrender.com/:path*
 ```
 
 If that line is missing, `API_URL` was not picked up.

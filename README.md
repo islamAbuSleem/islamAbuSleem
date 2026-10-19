@@ -16,6 +16,14 @@ Tools: Git, GitHub, Postman, Swagger, Figma
 - [portfolio-FE](https://github.com/islamAbuSleem/portfolio-FE) + [portfolio-BE](https://github.com/islamAbuSleem/portfolio-BE) — Next.js + NestJS portfolio platform
 - [Ecommerce](https://github.com/islamAbuSleem/Ecommerce) — TypeScript e-commerce app
 
+## Deployment
+This portfolio and its apps run entirely on free hosting — Cloudflare Workers,
+Render Free and Neon — at **$0/month**.
+
+- [Free-Tier Hosting Guide](FREE-TIER-HOSTING.md) — architecture, environment
+  variables, dashboard setup, CI/CD, migrations, troubleshooting, free-tier
+  limits and how to add a new project
+
 ## Background highlights
 - Foodics Pay merchant payment workflows
 - Saudi Ministry of Justice platforms @ 2P

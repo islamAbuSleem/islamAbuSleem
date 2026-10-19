@@ -66,6 +66,26 @@ Plus two static-ish Nuxt apps:
 | Learn Hub | `learn` | Nuxt 4.4.8 (`ssr: false`) | Cloudflare Workers (Nitro `cloudflare_module`) |
 | Software Engineer Docs | `software-engineer-docs` | Nuxt 4.5.2 + Nuxt Content 3 | Cloudflare Workers (prerendered static assets) |
 
+### Live URLs
+
+| Service | URL |
+|---|---|
+| Portfolio API (Render Free) | `https://portfolio-usca.onrender.com` |
+| API health | `https://portfolio-usca.onrender.com/health` |
+| API readiness (DB check) | `https://portfolio-usca.onrender.com/health/ready` |
+| Portfolio (Cloudflare Worker) | `https://portfolio-fe.<your-subdomain>.workers.dev` — *pending Cloudflare setup* |
+| Neon project | `Portfolio` (`old-butterfly-47446749`), region `aws-us-east-2` (Ohio), PG 18 |
+
+The Render service lives in **Oregon** and the Neon project in **Ohio**.
+Render's region cannot be changed after creation, so the two are ~30 ms
+apart in practice — irrelevant at this scale.
+
+> **Build command gotcha:** Render sets `NODE_ENV=production`, which makes
+> `npm ci` skip devDependencies. The Nest CLI and TypeScript are
+> devDependencies, so the build must be
+> `npm ci --include=dev && npm run build`, otherwise it fails with
+> `sh: 1: nest: not found`.
+
 ---
 
 ## 2. Environment variables
@@ -144,7 +164,7 @@ Both end with `?sslmode=require`.
    - **Branch:** `main`
    - **Root Directory:** *(leave empty)*
    - **Runtime:** Node
-   - **Build Command:** `npm ci && npm run build`
+    - **Build Command:** `npm ci --include=dev && npm run build`
    - **Start Command:** `npm run start:prod`
    - **Instance Type:** Free
 3. **Health Check Path:** `/health`
@@ -283,6 +303,8 @@ Useful commands:
 - [ ] Apply migrations locally against Neon: `DIRECT_DATABASE_URL=... npm run db:deploy`
 - [ ] Seed the database: `npm run db:seed` (then change the seeded password)
 - [ ] Create the Render Web Service from `portfolio-BE`; fill in the env vars
+      (build command `npm ci --include=dev && npm run build`, start command
+      `npm run start:prod`, health check path `/health`)
 - [ ] Verify: `curl https://portfolio-be.onrender.com/health` → `{"status":"ok",...}`
 - [ ] Verify: `curl https://portfolio-be.onrender.com/health/ready` → `"database":"reachable"`
 - [ ] Create the Cloudflare Worker from `portfolio-FE`
@@ -342,6 +364,12 @@ The build log tells you what happened:
 ```
 
 If that line is missing, `API_URL` was not picked up.
+
+### Render deploy fails with `sh: 1: nest: not found`
+
+`NODE_ENV=production` is set on Render, so `npm ci` **skips
+devDependencies** — and the Nest CLI (`@nestjs/cli`) and TypeScript are
+devDependencies. Use `npm ci --include=dev && npm run build`.
 
 ### Render deploy fails with "Cannot find module ... .prisma/client"
 

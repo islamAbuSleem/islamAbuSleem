@@ -68,13 +68,15 @@ Plus two static-ish Nuxt apps:
 
 ### Live URLs
 
-| Service | URL |
-|---|---|
-| Portfolio API (Render Free) | `https://portfolio-usca.onrender.com` |
-| API health | `https://portfolio-usca.onrender.com/health` |
-| API readiness (DB check) | `https://portfolio-usca.onrender.com/health/ready` |
-| Portfolio (Cloudflare Worker) | `https://portfolio-fe.<your-subdomain>.workers.dev` — *pending Cloudflare setup* |
-| Neon project | `Portfolio` (`old-butterfly-47446749`), region `aws-us-east-2` (Ohio), PG 18 |
+| Service | URL | Status |
+|---|---|---|
+| Portfolio (Cloudflare Worker) | `https://portfolio-fe.islamabusleem.workers.dev` | **Live** |
+| Portfolio API (Render Free) | `https://portfolio-usca.onrender.com` | **Live** |
+| API health | `https://portfolio-usca.onrender.com/health` | **Live** |
+| API readiness (DB check) | `https://portfolio-usca.onrender.com/health/ready` | **Live** |
+| Custom domain | `https://islamabusleem.dev` | Attached to the Worker — **needs the domain registered** (§3.4) |
+| workers.dev subdomain | `islamabusleem` | Registered |
+| Neon project | `Portfolio` (`old-butterfly-47446749`), region `aws-us-east-2` (Ohio), PG 18 | **Live** |
 
 The Render service lives in **Oregon** and the Neon project in **Ohio**.
 Render's region cannot be changed after creation, so the two are ~30 ms
@@ -86,6 +88,12 @@ apart in practice — irrelevant at this scale.
 > `npm ci --include=dev && npm run build`, otherwise it fails with
 > `sh: 1: nest: not found`.
 
+> **Cold-start gotcha:** Render sleeps after 15 minutes idle and takes ~50 s
+> to wake. A Cloudflare Workers subrequest times out before that, so the
+> first proxied `/api/*` request after a sleep returns **504**. The
+> `keep-warm.yml` workflow in `portfolio-BE` pings `/health` every 5 minutes
+> to keep the instance awake.
+
 ---
 
 ## 2. Environment variables
@@ -94,7 +102,7 @@ apart in practice — irrelevant at this scale.
 
 | Variable | Type | Required | Value |
 |---|---|---|---|
-| `API_URL` | **Build** variable | **Yes** | `https://portfolio-be.onrender.com` |
+| `API_URL` | **Build** variable | **Yes** | `https://portfolio-usca.onrender.com` |
 
 `API_URL` is read at **build time** by `next.config.ts` to build the rewrite
 destination. It must be a **build variable** in Workers Builds, not a runtime
@@ -103,13 +111,23 @@ proxied (the app still boots, but the admin panel cannot authenticate).
 
 `NEXT_PUBLIC_API_URL` is intentionally **not** set in production — see above.
 
+The deployed Worker also needs the `API_URL` value when you deploy from the
+CLI:
+
+```bash
+CLOUDFLARE_API_TOKEN=<token> \
+CLOUDFLARE_ACCOUNT_ID=<account-id> \
+API_URL=https://portfolio-usca.onrender.com \
+npx cf deploy
+```
+
 ### Render Free — portfolio-BE
 
 | Variable | Required | Notes |
 |---|---|---|
 | `DATABASE_URL` | **Yes** | Neon **pooled** connection string (host contains `-pooler`) |
 | `JWT_SECRET` | **Yes** | `openssl rand -base64 48` |
-| `FRONTEND_URL` | **Yes** | Comma-separated CORS allow-list, e.g. `https://portfolio-fe.<sub>.workers.dev` |
+| `FRONTEND_URL` | **Yes** | Comma-separated CORS allow-list, e.g. `https://portfolio-fe.islamabusleem.workers.dev` |
 | `APP_URL` | Recommended | Single origin used to build magic-link emails |
 | `NODE_ENV` | Yes | `production` (Render sets it for you) |
 | `PORT` | Auto | Render injects it; the app listens on `0.0.0.0:$PORT` |
@@ -182,57 +200,131 @@ Both end with `?sslmode=require`.
 
 ### 3.3 Cloudflare (the portfolio)
 
-1. Sign in at <https://dash.cloudflare.com>.
-2. **Workers & Pages → Create → Import a project** (Workers Builds) and
-   connect the `portfolio-FE` repository.
-3. Build settings:
-   - **Framework preset:** None (or "None" for Workers)
+Two ways to deploy. The CLI route is what was used for the first deploy; the
+Workers Builds route is what you want for automatic deployments afterwards.
+
+#### Option A — CLI (used for the first deploy)
+
+1. Create an API token: **Cloudflare → My Profile → API Tokens → Create Token →
+   Custom token**
+   - **Account → Workers Scripts → Edit**
+   - **Account → Account Settings → Read**
+   - Account Resources: include your account
+2. Register the `workers.dev` subdomain (once per account). Either open the
+   Workers & Pages page in the dashboard, or call the API:
+   ```bash
+   curl -X PUT \
+     "https://api.cloudflare.com/client/v4/accounts/<account-id>/workers/subdomain" \
+     -H "Authorization: Bearer <token>" -H "Content-Type: application/json" \
+     -d '{"subdomain":"islamabusleem"}'
+   ```
+3. Deploy from the repository:
+   ```bash
+   cd islam/client
+   CLOUDFLARE_API_TOKEN=<token> \
+   CLOUDFLARE_ACCOUNT_ID=<account-id> \
+   API_URL=https://portfolio-usca.onrender.com \
+   npx cf deploy
+   ```
+   `API_URL` **must** be set here — the rewrite destination is baked in at
+   build time. The build log confirms it:
+   ```
+   [vinext] Found 1 external rewrite that proxy requests to external origins:
+     /api/:path* → https://portfolio-usca.onrender.com/:path*
+   ```
+
+#### Option B — Workers Builds (GitHub auto-deploy)
+
+1. **Workers & Pages → Create → Import a project**, connect `portfolio-FE`.
+2. Build settings:
+   - **Framework preset:** None
    - **Build command:** `npm run build:vinext`
    - **Build output directory:** *(leave empty — vinext writes to
      `.cloudflare/output`)*
    - **Root directory:** *(leave empty)*
    - **Node version:** `22`
-4. **Settings → Variables and Secrets → Add**:
+3. **Settings → Variables and Secrets → Add**:
    - `API_URL` → **Type: Text** and **under "Build variables"** — this is the
      important part. The rewrite destination is baked in at build time.
    - `NODE_ENV` → `production` (Text)
-5. **Save and deploy.**
+4. **Save and deploy.**
 
-Your portfolio will be at `https://portfolio-fe.<your-subdomain>.workers.dev`.
+The portfolio lives at `https://portfolio-fe.islamabusleem.workers.dev`.
 
-### 3.4 Cloudflare (Learn Hub)
+### 3.4 Custom domain (`islamabusleem.dev`)
 
-Same as above, but for the `learn` repository:
+The domain is **attached to the Worker** and the Cloudflare zone already
+exists (Free plan), but the domain itself is **not registered yet** — the
+`.dev` registry returns NXDOMAIN for it. Until it is registered and the
+nameservers are changed, `islamabusleem.dev` does not resolve and the Worker
+is only reachable on `workers.dev`.
 
-- **Build command:** `npm run build:cloudflare`
-- No environment variables needed.
+To finish:
 
-### 3.5 Cloudflare (Software Engineer Docs)
+1. **Register `islamabusleem.dev`** at a registrar. Cloudflare Registrar
+   sells `.dev` at cost and lets you set the nameservers in the same
+   dashboard, which is the smoothest option.
+2. **Point the nameservers at Cloudflare:**
+   - `anita.ns.cloudflare.com`
+   - `lennox.ns.cloudflare.com`
+3. Wait for the zone to leave the `pending` state. The certificate for
+   `islamabusleem.dev` is already provisioned on the Worker, so it starts
+   serving as soon as DNS resolves.
 
-Same, but for `software-engineer-docs`:
+Until then, add the custom domain to the CORS allow-list as well:
 
-- **Build command:** `npm run build:cloudflare`
-- No environment variables needed.
+```
+FRONTEND_URL=https://portfolio-fe.islamabusleem.workers.dev,https://islamabusleem.dev
+```
+
+### 3.5 Learn Hub and Software Engineer Docs (prepared, not deployed)
+
+These two Nuxt apps are **ready to publish but deliberately not deployed** —
+only the portfolio and its API are live. When you decide to publish them:
+
+- **Learn Hub** (`learn`) — Nitro `cloudflare_module` preset:
+  ```bash
+  cd learn
+  CLOUDFLARE_API_TOKEN=<token> CLOUDFLARE_ACCOUNT_ID=<account-id> \
+    npm run deploy:cloudflare
+  ```
+  → `https://learn-hub.islamabusleem.workers.dev`
+
+- **Software Engineer Docs** (`software-engineer-docs`) — prerendered static
+  assets (its `@nuxt/content` runtime needs the native `better-sqlite3`
+  module, which Workers cannot load):
+  ```bash
+  cd software-engineer-docs
+  CLOUDFLARE_API_TOKEN=<token> CLOUDFLARE_ACCOUNT_ID=<account-id> \
+    npm run deploy:cloudflare
+  ```
+  → `https://engineer-docs.islamabusleem.workers.dev`
+
+  Note: `software-engineer-docs` is not a Git repository yet, so it cannot
+  be wired to Workers Builds until it is initialised and pushed.
 
 ---
 
 ## 4. GitHub CI/CD
 
-### Continuous deployment (already configured)
+### Continuous deployment
 
-| App | Mechanism | Trigger |
-|---|---|---|
-| portfolio-FE | **Cloudflare Workers Builds** (GitHub integration) | push to `main` |
-| portfolio-BE | **Render auto-deploy** (GitHub integration) | push to `main` |
-| Learn Hub | **Cloudflare Workers Builds** | push to `main` |
-| Engineer Docs | **Cloudflare Workers Builds** | push to `main` |
+| App | Mechanism | Trigger | Status |
+|---|---|---|---|
+| portfolio-BE (API) | **Render auto-deploy** (GitHub integration) | push to `main` | **Active** |
+| portfolio-FE (Worker) | **Cloudflare Workers Builds** (GitHub integration) | push to `main` | Not yet connected — deploys from the CLI for now |
+| Learn Hub | Cloudflare Workers Builds | push to `main` | Not deployed |
+| Engineer Docs | Cloudflare Workers Builds | push to `main` | Not deployed |
 
-Enable them:
+To connect the portfolio Worker to GitHub (in the Cloudflare dashboard):
+**Workers & Pages → portfolio-fe → Settings → Builds → Connect repository**,
+then set the build command to `npm run build:vinext` and add `API_URL` as a
+**build variable**.
 
-- Cloudflare: in the Worker → **Settings → Builds → Connect repository**.
-- Render: in the Web Service → **Settings → Auto-Deploy → Yes**.
+Render auto-deploy is already enabled on the `portfolio` service and builds
+from `main`.
 
-### Continuous integration (added in this change)
+### Continuous integration
 
 `.github/workflows/ci.yml` was added to `portfolio-FE` and `portfolio-BE`:
 
@@ -242,6 +334,10 @@ Enable them:
   throwaway PostgreSQL 16 service container.
 
 These run on every push and pull request to `main`.
+
+`.github/workflows/keep-warm.yml` was added to `portfolio-BE`: it pings the
+API health endpoint every 5 minutes so the Render free instance does not
+spin down (see the cold-start note in §1).
 
 ### Branch strategy
 
@@ -297,28 +393,32 @@ Useful commands:
 
 ## 6. Deployment checklist
 
-### First deployment
+### First deployment — DONE
 
-- [ ] Create the Neon project; copy the **pooled** and **direct** URLs.
-- [ ] Apply migrations locally against Neon: `DIRECT_DATABASE_URL=... npm run db:deploy`
-- [ ] Seed the database: `npm run db:seed` (then change the seeded password)
-- [ ] Create the Render Web Service from `portfolio-BE`; fill in the env vars
+- [x] Create the Neon project; copy the **pooled** and **direct** URLs.
+- [x] Apply migrations locally against Neon: `DIRECT_DATABASE_URL=... npm run db:deploy`
+- [x] Seed the database: `npm run db:seed` (then change the seeded password)
+- [x] Create the Render Web Service from `portfolio-BE`; fill in the env vars
       (build command `npm ci --include=dev && npm run build`, start command
       `npm run start:prod`, health check path `/health`)
-- [ ] Verify: `curl https://portfolio-be.onrender.com/health` → `{"status":"ok",...}`
-- [ ] Verify: `curl https://portfolio-be.onrender.com/health/ready` → `"database":"reachable"`
-- [ ] Create the Cloudflare Worker from `portfolio-FE`
-- [ ] Add `API_URL=https://portfolio-be.onrender.com` as a **build variable**
-- [ ] Deploy and open `https://portfolio-fe.<sub>.workers.dev`
-- [ ] Open `/admin/login` and sign in — **this is the real end-to-end test**
-      of the cookie proxy. If the cookie is not forwarded, the API's
-      `FRONTEND_URL` is wrong or `API_URL` was set as a runtime secret
-      instead of a build variable.
-- [ ] Fill the live URLs into `data/projects.ts` → `PROJECT_LIVE_URLS`
+- [x] Verify: `curl https://portfolio-usca.onrender.com/health` → `{"status":"ok",...}`
+- [x] Verify: `curl https://portfolio-usca.onrender.com/health/ready` → `"database":"reachable"`
+- [x] Create the Cloudflare Worker from `portfolio-FE`
+- [x] Deploy with `API_URL=https://portfolio-usca.onrender.com` set at build time
+- [x] Verify `https://portfolio-fe.islamabusleem.workers.dev` renders (SSR)
+- [x] Verify `https://portfolio-fe.islamabusleem.workers.dev/api/projects` proxies
+- [x] Fill the live URL into `data/projects.ts` → `PROJECT_LIVE_URLS`
+- [x] Push the `main` branches so CI runs
+- [ ] Open `/admin/login` and sign in — **the real end-to-end test** of the
+      cookie proxy. If the cookie is not forwarded, the API's `FRONTEND_URL`
+      is wrong or `API_URL` was set as a runtime secret instead of a build
+      variable.
+- [ ] Register `islamabusleem.dev` and set its nameservers to
+      `anita.ns.cloudflare.com` / `lennox.ns.cloudflare.com` (§3.4), then add
+      `https://islamabusleem.dev` to the API's `FRONTEND_URL`.
+- [ ] Connect the Worker to GitHub for auto-deploy (§4).
 - [ ] Add a screenshot per project to `public/projects/<slug>.png`
-- [ ] Deploy Learn Hub and Engineer Docs to Cloudflare
-- [ ] Add their URLs to `PROJECT_LIVE_URLS`
-- [ ] Push the `main` branches so CI runs
+- [ ] Decide whether to publish Learn Hub and Engineer Docs (§3.5)
 
 ### Every subsequent deploy
 
@@ -360,7 +460,7 @@ The build log tells you what happened:
 
 ```
 [vinext] Found 1 external rewrite that proxy requests to external origins:
-  /api/:path* → https://portfolio-be.onrender.com/:path*
+  /api/:path* → https://portfolio-usca.onrender.com/:path*
 ```
 
 If that line is missing, `API_URL` was not picked up.
@@ -471,7 +571,7 @@ fastest local feedback loop and are independent of the deploy adapter.
 
 Render's free tier sleeping is the most visible limitation. A free
 cron service (e.g. cron-job.org, or GitHub Actions on a schedule) that hits
-`https://portfolio-be.onrender.com/health` every 10 minutes keeps it warm:
+`https://portfolio-usca.onrender.com/health` every 10 minutes keeps it warm:
 
 ```yaml
 # .github/workflows/keep-warm.yml
@@ -484,7 +584,7 @@ jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - run: curl -fsS https://portfolio-be.onrender.com/health
+      - run: curl -fsS https://portfolio-usca.onrender.com/health
 ```
 
 Note: GitHub Actions schedules can be delayed by up to ~15 minutes on busy
@@ -509,7 +609,7 @@ without a deploy; use the static catalogue for code-controlled content.
 
 ### Option A — the admin panel (no deploy needed)
 
-1. Sign in at `https://portfolio-fe.<sub>.workers.dev/admin/projects`.
+1. Sign in at `https://portfolio-fe.islamabusleem.workers.dev/admin/projects`.
 2. Fill in title, description, tech stack (comma-separated), screenshot URL,
    live demo URL and GitHub URL.
 3. Toggle **Featured** to show it in the home-page strip.

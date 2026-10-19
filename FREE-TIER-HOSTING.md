@@ -68,19 +68,24 @@ Plus two static-ish Nuxt apps:
 
 ### Live URLs
 
+The canonical origin of the portfolio is the **custom domain**
+`https://islamabusleem.dev`. The generated `workers.dev` hostname is kept as
+a fallback until the domain is registered.
+
 | Service | URL | Status |
 |---|---|---|
-| Portfolio (Cloudflare Worker) | `https://portfolio-fe.islamabusleem.workers.dev` | **Live** |
+| **Portfolio (main link)** | `https://islamabusleem.dev` | **Canonical** — needs the domain registered (§3.4) |
+| Portfolio (fallback hostname) | `https://portfolio-fe.islamabusleem.workers.dev` | **Live** |
 | Portfolio API (Render Free) | `https://portfolio-usca.onrender.com` | **Live** |
 | API health | `https://portfolio-usca.onrender.com/health` | **Live** |
 | API readiness (DB check) | `https://portfolio-usca.onrender.com/health/ready` | **Live** |
-| Custom domain | `https://islamabusleem.dev` | Attached to the Worker — **needs the domain registered** (§3.4) |
 | workers.dev subdomain | `islamabusleem` | Registered |
 | Neon project | `Portfolio` (`old-butterfly-47446749`), region `aws-us-east-2` (Ohio), PG 18 | **Live** |
 
-The Render service lives in **Oregon** and the Neon project in **Ohio**.
-Render's region cannot be changed after creation, so the two are ~30 ms
-apart in practice — irrelevant at this scale.
+`lib/site.ts` holds `SITE_URL` (the canonical origin) and is used for
+`metadataBase`, `alternates.canonical` and the Open Graph URL, so search
+engines and link previews point at the custom domain. The portfolio's own
+project card links to `SITE_URL` too.
 
 > **Build command gotcha:** Render sets `NODE_ENV=production`, which makes
 > `npm ci` skip devDependencies. The Nest CLI and TypeScript are
@@ -270,6 +275,19 @@ To finish:
 3. Wait for the zone to leave the `pending` state. The certificate for
    `islamabusleem.dev` is already provisioned on the Worker, so it starts
    serving as soon as DNS resolves.
+4. **Point the fallback hostname at the main link.** Once the custom domain
+   resolves, redirect the `workers.dev` hostname to it so there is a single
+   public URL:
+   ```bash
+   # add a route on the Worker that 301s the fallback hostname
+   curl -X POST \
+     "https://api.cloudflare.com/client/v4/accounts/<account-id>/workers/routes" \
+     -H "Authorization: Bearer <token>" -H "Content-Type: application/json" \
+     -d '{"pattern":"portfolio-fe.islamabusleem.workers.dev","script":"portfolio-fe"}'
+   ```
+   (Or simply keep both hostnames serving the same Worker — the canonical
+   tags already point at the custom domain, so the fallback is only a
+   convenience entry point.)
 
 Until then, add the custom domain to the CORS allow-list as well:
 
